@@ -46,7 +46,7 @@ end UART;
 architecture Behavioral of UART is
 
 signal baud_clk : std_logic :='0';  --l'horloge pour le générateur de baud
-signal baud_clk_counter: integer range 0 to 5207 := 0; --pour compter le nombre de tics avant de changer l'etat d'horloge
+signal baud_clk_counter: integer range 0 to 2603 := 0; --pour compter le nombre de tics avant de changer l'etat d'horloge
 signal transmit_serial_counter: integer range 0 to 10 := 10;--pour savoir a quel bit on est dans la transmition/réception
 signal baud_clk_reset : std_logic :='0';
 signal baud_clk_reset_previous : std_logic :='0';
@@ -68,7 +68,7 @@ begin
 	elsif(baud_clk_reset='0' and baud_clk_reset_previous='1') then
 		baud_clk_reset_previous<='0';
 	elsif rising_edge(CLK) then
-		if (baud_clk_counter = 5207) then
+		if (baud_clk_counter = 2603) then
 			baud_clk <=NOT(baud_clk);
 			baud_clk_counter <=0;
 		else
@@ -77,42 +77,43 @@ begin
 	end if;	
 end process;
 
-process(transmit,RST)
+process(baud_clk,transmit,RST)
 begin
 	if(RST='1') then
 		transmit_serial_counter<=10;
-		transmit<='0';
-	elsif(transmit='1' and transmit_serial_counter=10) then
-			baud_clk_reset<='1';
-			transmit_serial_counter<=0;
-	elsif(transmit_serial_counter<10 and rising_edge(baud_clk)) then
-			transmit<='0';
-			baud_clk_reset<='0';
-			transmit_serial_counter<=transmit_serial_counter+1;	
-	end if;
-end process;
-
-process(CS,RW,address)
-begin
-	if(CS='1') then
-		if(RW='1') then
-			if(address="00") then
-				serial_out_buffer(8 downto 1)<=data;
-			elsif(address="11") then
-				transmit<=data(1);
-			end if;
-		else
-			if(address="00") then
-				data<=serial_out_buffer(8 downto 1);
-			elsif(address="1X") then
-				data(0)<=busy;
-			end if;
+		baud_clk_reset<='0';
+	elsif(rising_edge(transmit) and transmit_serial_counter=10) then
+		transmit_serial_counter<=0;
+		baud_clk_reset<='1';
+	elsif(rising_edge(baud_clk)) then
+		baud_clk_reset<='0';
+		if(transmit_serial_counter<10) then
+			transmit_serial_counter<=transmit_serial_counter+1;
 		end if;
-	else
-		data<="ZZZZZZZZ";
 	end if;
 end process;
 
+--process(CS,RW,address)
+--begin
+--	if(CS='1') then
+--		if(RW='1') then
+--			if(address="00") then
+--				serial_out_buffer(8 downto 1)<=data;
+--			elsif(address="11") then
+--				transmit<=data(1);
+--			end if;
+--		else
+--			if(address="00") then
+--				data<=serial_out_buffer(8 downto 1);
+--			elsif(address="1X") then
+--				data(0)<=busy;
+--			end if;
+--		end if;
+--	else
+--		data<="ZZZZZZZZ";
+--	end if;
+--end process;
+--
 process(transmit_serial_counter)
 begin
 	if(transmit_serial_counter<10) then
@@ -121,7 +122,9 @@ begin
 		busy<='0';
 	end if;
 end process;
+
 Tx<=serial_out_buffer(transmit_serial_counter);
-INT<=data(1);
+INT<=baud_clk;
+transmit<= Rx;
 end Behavioral;
 

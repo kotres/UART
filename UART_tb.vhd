@@ -109,8 +109,16 @@ BEGIN
 		data<="00000000";
 		wait for 300 ns;
 		data<="11111111";
-		wait for 300 ns;
-		CS<='0';
+		wait for 150 us;
+		Rx<='1';
+		wait for 36 us;
+		Rx<='0';
+		wait for 52 us;
+		Rx<='1';
+		wait for 150 us;
+		Rx<='0';
+		wait for 1350 us;
+		Rx<='1';
       wait;
    end process;
 
