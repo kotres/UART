@@ -55,7 +55,7 @@ ARCHITECTURE behavior OF UART_tb IS
     
 
    --Inputs
-   signal Rx : std_logic := '0';
+   signal Rx : std_logic := '1';
    signal CLK : std_logic := '0';
    signal RST : std_logic := '0';
    signal CS : std_logic := '1';
@@ -106,18 +106,24 @@ BEGIN
       wait for CLK_period*10;
 
       -- insert stimulus here 
-		data<="00000000";
-		wait for 300 ns;
-		data<="11111111";
-		wait for 150 us;
-		Rx<='1';
-		wait for 36 us;
+		--data<="00000000";
+		wait for 78 us;
 		Rx<='0';
-		wait for 52 us;
+		wait for 104.2 us;
 		Rx<='1';
-		wait for 150 us;
+		wait for 104.2 us;
+		Rx<='1';
+		wait for 104.2 us;
 		Rx<='0';
-		wait for 1350 us;
+		wait for 104.2 us;
+		Rx<='1';
+		wait for 104.2 us;
+		Rx<='0';
+		wait for 104.2 us;
+		Rx<='1';
+		wait for 104.2 us;
+		Rx<='1';
+		wait for 104.2 us;
 		Rx<='1';
       wait;
    end process;
