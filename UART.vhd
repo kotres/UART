@@ -47,16 +47,19 @@ architecture Behavioral of UART is
 
 signal baud_clk : std_logic :='0';  --l'horloge pour le générateur de baud
 signal baud_clk_counter: integer range 0 to 2603 := 0; --pour compter le nombre de tics avant de changer l'etat d'horloge
-signal transmit_serial_counter: integer range 0 to 10 := 10;--pour savoir a quel bit on est dans la transmition/réception
-signal baud_clk_reset : std_logic :='0';
-signal baud_clk_reset_transmit : std_logic :='0';
-signal baud_clk_reset_recieve : std_logic :='0';
+signal baud_clk_reset : std_logic :='0';-- pour un reset de l'horloge au debut d'unne emmition ou reception
 signal baud_clk_reset_previous : std_logic :='0';
-signal serial_out_buffer : STD_LOGIC_VECTOR(10 downto 0):="11001010010";
+
+signal transmit_serial_counter: integer range 0 to 11 := 11;--pour savoir a quel bit on est dans la transmition/réception
+signal serial_out_buffer : STD_LOGIC_VECTOR(11 downto 0):="11000111010X";
 signal transmit : std_logic :='0';
+signal baud_clk_reset_transmit : std_logic :='0';
+
 signal recieve_serial_counter: integer range 0 to 10 := 10;
 signal serial_in_buffer : STD_LOGIC_VECTOR(10 downto 0):="00000000000";
 signal busy : std_logic :='0';
+signal baud_clk_reset_recieve : std_logic :='0';
+
 
 begin
 
@@ -84,13 +87,13 @@ end process;
 process(baud_clk,transmit,RST)
 begin
 	if(RST='1') then
-		transmit_serial_counter<=10;
-	elsif(rising_edge(transmit) and transmit_serial_counter=10) then
+		transmit_serial_counter<=11;
+	elsif(rising_edge(transmit) and transmit_serial_counter=11 and recieve_serial_counter=10) then
 		transmit_serial_counter<=0;
 		baud_clk_reset_transmit<='1';
-	elsif(rising_edge(baud_clk)) then
+	elsif(falling_edge(baud_clk)) then
 		baud_clk_reset_transmit<='0';
-		if(transmit_serial_counter<10) then
+		if(transmit_serial_counter<11) then
 			transmit_serial_counter<=transmit_serial_counter+1;
 		end if;
 	end if;
@@ -100,7 +103,7 @@ process(baud_clk,RST,Rx)
 begin
 	if(RST='1') then
 		recieve_serial_counter<=10;
-	elsif(falling_edge(Rx) and recieve_serial_counter=10 and transmit_serial_counter=10) then
+	elsif(falling_edge(Rx) and recieve_serial_counter=10 and transmit_serial_counter=11) then
 		recieve_serial_counter<=0;
 		baud_clk_reset_recieve<='1';
 	elsif(rising_edge(baud_clk)) then
@@ -112,33 +115,10 @@ begin
 	end if;
 end process;
 
---process(CS,RW,address)
---begin
---	if(CS='1') then
---		if(RW='1') then
---			if(address="00") then
---				serial_out_buffer(8 downto 1)<=data;
---			elsif(address="11") then
---				transmit<=data(1);
---			end if;
---		else
---			if(address="00") then
---				data<=serial_out_buffer(8 downto 1);
---			elsif(address="01") then
---				data<=serial_in_buffer(8 downto 1);
---			elsif(address="11") then
---				data(0)<=busy;
---			end if;
---		end if;
---	else
---		data<="ZZZZZZZZ";
---	end if;
---end process;
-
 
 process(transmit_serial_counter,recieve_serial_counter)
 begin
-	if(transmit_serial_counter<10 or recieve_serial_counter<10) then
+	if(transmit_serial_counter<11 or recieve_serial_counter<10) then
 		busy<='1';
 	else
 		busy<='0';
@@ -148,10 +128,13 @@ end process;
 baud_clk_reset<=baud_clk_reset_recieve or baud_clk_reset_transmit;
 
 data<= serial_in_buffer(8 downto 1) when CS='1' and RW='0' and address="00" else
-		 serial_out_buffer(8 downto 1) when CS='1' and RW='0' and address="01" else
-		 "ZZZZZZZZ" when CS='0';
+		 serial_out_buffer(9 downto 2) when CS='1' and RW='0' and address="01" else
+		 busy & transmit & "000000" when CS='1' and RW='0' and address="11" else
+		 "ZZZZZZZZ" when RW='1';
 		 
+transmit<= data(1) when CS='1' and RW='1' and address="11" and busy='0';
+
 Tx<=serial_out_buffer(transmit_serial_counter);
---Tx<=baud_clk;
+INT<=baud_clk;
 end Behavioral;
 
