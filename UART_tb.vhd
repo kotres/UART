@@ -59,8 +59,8 @@ ARCHITECTURE behavior OF UART_tb IS
    signal CLK : std_logic := '0';
    signal RST : std_logic := '0';
    signal CS : std_logic := '1';
-   signal RW : std_logic := '1';
-   signal address : std_logic_vector(1 downto 0) := "11";
+   signal RW : std_logic := '0';
+   signal address : std_logic_vector(1 downto 0) := "00";
 
 	--BiDirs
    signal data : std_logic_vector(7 downto 0);
@@ -120,11 +120,17 @@ BEGIN
 		wait for 104.2 us;
 		Rx<='0';
 		wait for 104.2 us;
-		Rx<='1';
+		Rx<='0';
 		wait for 104.2 us;
 		Rx<='1';
 		wait for 104.2 us;
 		Rx<='1';
+		wait for 200 us;
+--		CS<='0';
+--		wait for 200 us;
+--		address<="11";
+--		data<="11111111";
+--		RW<='1';
       wait;
    end process;
 

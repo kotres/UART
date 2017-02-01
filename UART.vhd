@@ -54,8 +54,8 @@ signal baud_clk_reset_recieve : std_logic :='0';
 signal baud_clk_reset_previous : std_logic :='0';
 signal serial_out_buffer : STD_LOGIC_VECTOR(10 downto 0):="11001010010";
 signal transmit : std_logic :='0';
-signal recieve_serial_counter: integer range 0 to 9 := 9;
-signal serial_in_buffer : STD_LOGIC_VECTOR(9 downto 0):="0001000000";
+signal recieve_serial_counter: integer range 0 to 10 := 10;
+signal serial_in_buffer : STD_LOGIC_VECTOR(10 downto 0):="00000000000";
 signal busy : std_logic :='0';
 
 begin
@@ -99,13 +99,13 @@ end process;
 process(baud_clk,RST,Rx)
 begin
 	if(RST='1') then
-		recieve_serial_counter<=9;
-	elsif(falling_edge(Rx) and recieve_serial_counter=9 and transmit_serial_counter=10) then
+		recieve_serial_counter<=10;
+	elsif(falling_edge(Rx) and recieve_serial_counter=10 and transmit_serial_counter=10) then
 		recieve_serial_counter<=0;
 		baud_clk_reset_recieve<='1';
 	elsif(rising_edge(baud_clk)) then
 		baud_clk_reset_recieve<='0';
-		if(recieve_serial_counter<9) then
+		if(recieve_serial_counter<10) then
 			serial_in_buffer(recieve_serial_counter)<=Rx;
 			recieve_serial_counter<=recieve_serial_counter+1;
 		end if;
@@ -124,7 +124,9 @@ end process;
 --		else
 --			if(address="00") then
 --				data<=serial_out_buffer(8 downto 1);
---			elsif(address="1X") then
+--			elsif(address="01") then
+--				data<=serial_in_buffer(8 downto 1);
+--			elsif(address="11") then
 --				data(0)<=busy;
 --			end if;
 --		end if;
@@ -132,10 +134,11 @@ end process;
 --		data<="ZZZZZZZZ";
 --	end if;
 --end process;
---
+
+
 process(transmit_serial_counter,recieve_serial_counter)
 begin
-	if(transmit_serial_counter<10 or recieve_serial_counter<9) then
+	if(transmit_serial_counter<10 or recieve_serial_counter<10) then
 		busy<='1';
 	else
 		busy<='0';
@@ -144,8 +147,11 @@ end process;
 
 baud_clk_reset<=baud_clk_reset_recieve or baud_clk_reset_transmit;
 
-data<=serial_in_buffer(8 downto 1);
---Tx<=serial_in_buffer(recieve_serial_counter);
-Tx<=baud_clk;
+data<= serial_in_buffer(8 downto 1) when CS='1' and RW='0' and address="00" else
+		 serial_out_buffer(8 downto 1) when CS='1' and RW='0' and address="01" else
+		 "ZZZZZZZZ" when CS='0';
+		 
+Tx<=serial_out_buffer(transmit_serial_counter);
+--Tx<=baud_clk;
 end Behavioral;
 
