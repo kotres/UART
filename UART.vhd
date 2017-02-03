@@ -60,6 +60,11 @@ signal serial_in_buffer : STD_LOGIC_VECTOR(10 downto 0):="00000000000";
 signal busy : std_logic :='0';
 signal baud_clk_reset_recieve : std_logic :='0';
 
+signal recieve_finished_flag : std_logic :='0';
+signal transmit_finished_flag : std_logic :='0';
+signal transmit_finished_IE : std_logic :='0';
+signal recieve_finished_IE : std_logic :='0';
+
 
 begin
 
@@ -129,10 +134,18 @@ baud_clk_reset<=baud_clk_reset_recieve or baud_clk_reset_transmit;
 
 data<= serial_in_buffer(8 downto 1) when CS='1' and RW='0' and address="00" else
 		 serial_out_buffer(9 downto 2) when CS='1' and RW='0' and address="01" else
-		 busy & transmit & "000000" when CS='1' and RW='0' and address="11" else
+		 busy & transmit & transmit_finished_flag &
+		 transmit_finished_IE & recieve_finished_flag &
+		 recieve_finished_IE & "00" when CS='1' and RW='0' and address="11" else
 		 "ZZZZZZZZ" when RW='1';
 		 
 transmit<= data(1) when CS='1' and RW='1' and address="11" and busy='0';
+transmit_finished_flag<= data(2) when CS='1' and RW='1' and address="11" and busy='0';
+transmit_finished_IE<= data(3) when CS='1' and RW='1' and address="11" and busy='0';
+recieve_finished_flag<= data(4) when CS='1' and RW='1' and address="11" and busy='0';
+recieve_finished_IE<= data(4) when CS='1' and RW='1' and address="11" and busy='0';
+serial_out_buffer(9 downto 2)<= data when CS='1' and RW='1' and address="01" and busy='0';
+
 
 Tx<=serial_out_buffer(transmit_serial_counter);
 INT<=baud_clk;
