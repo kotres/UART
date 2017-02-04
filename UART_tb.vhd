@@ -108,7 +108,7 @@ BEGIN
       -- insert stimulus here 
 		data<="00000000";
 		wait for 78 us;
-		data<="11111111";
+		data<="00001010";
 --		Rx<='0';
 		wait for 104.2 us;
 --		data<="ZZZZZZZZ";
@@ -117,21 +117,26 @@ BEGIN
 --		Rx<='1';
 		wait for 104.2 us;
 --		Rx<='1';
-		data<="00000000";
+		data<="00001000";
 		wait for 104.2 us;
-		data<="11111111";
+		data<="00001010";
 --		Rx<='0';
---		wait for 104.2 us;
+		wait for 104.2 us;
+		CS<='0';
 --		Rx<='1';
---		wait for 104.2 us;
+		wait for 104.2 us;
 --		Rx<='0';
---		wait for 104.2 us;
+		wait for 104.2 us;
 --		Rx<='0';
---		wait for 104.2 us;
+		wait for 104.2 us;
 --		Rx<='1';
---		wait for 104.2 us;
+		wait for 104.2 us;
 --		Rx<='1';
---		wait for 200 us;
+		wait for 300 us;
+		CS<='1';
+		data<="00001000";
+		wait for 125 us;
+		data<="00001010";
       wait;
    end process;
 
